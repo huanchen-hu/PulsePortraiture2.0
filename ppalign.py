@@ -174,12 +174,14 @@ def align_archives(metafile, initial_guess, fit_dm=True, tscrunch=False,
                 freqs = data.freqs[isub,ichans]  #Use data freqs
                 #freqs = model_data.freqs[isub,model_ichans]  #Use model freqs
                 model = model_port[model_ichans]
+                doppler_factors = data['doppler_factors']
                 P = data.Ps[isub]
                 SNRs = data.SNRs[isub,0,ichans]
                 errs = data.noise_stds[isub,0,ichans]
                 nu_fit = guess_fit_freq(freqs, SNRs)
+                print "nu_fit", nu_fit
                 rot_port = rotate_data(port, 0.0, DM_guess, P, freqs,
-                        nu_fit)
+                        nu_fit, doppler_factors)
                 phase_guess = fit_phase_shift(np.average(rot_port, axis=0,
                     weights=data.weights[isub,ichans]), model.mean(axis=0),
                     Ns=nbin).phase
@@ -192,19 +194,26 @@ def align_archives(metafile, initial_guess, fit_dm=True, tscrunch=False,
                             [nu_fit, nu_fit, nu_fit], [None, None, None], errs,
                             fit_flags, log10_tau=False, quiet=quiet)
                     results.phase = results.phi
-                    results.nu_ref = results.nu_DM
+                    results.nu_ref = freqs[-1] #results.nu_DM
                 else:  #1-channel hack
                     results = fit_phase_shift(port[0], model[0], errs[0],
                             Ns=nbin)
                     results.DM = data.DM
                     results.nu_ref = freqs[0]
                     results.scales = np.array([results.scale])
+                #print "DM guess = %f"%DM_guess
+                print "results.DM = %f"%results.DM
+                print "results.nu_ref = ", results.nu_ref
+                #print "results.phase = %f"%results.phase
+                #print "P = %f"%P
+                #print "freqs= ", freqs
+                #print "results.nu_ref = %f"%results.nu_ref
                 weights = np.outer(results.scales / errs**2, np.ones(nbin))
                 for ipol in range(npol):
                     aligned_port[ipol, model_ichans] += weights * \
                             rotate_data(data.subints[isub,ipol,ichans],
                                     results.phase, results.DM, P, freqs,
-                                    results.nu_ref)
+                                    results.nu_ref, doppler_factors)
                 total_weights[model_ichans] +=  weights
             load_quiet = True
         for ipol in range(npol):

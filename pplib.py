@@ -2335,7 +2335,7 @@ def get_scales(data, model, phase, DM, P, freqs, nu_ref=np.inf):
     scales /= p_n
     return scales
 
-def rotate_data(data, phase=0.0, DM=0.0, Ps=None, freqs=None, nu_ref=np.inf):
+def rotate_data(data, phase=0.0, DM=0.0, Ps=None, freqs=None, nu_ref=np.inf, doppler=None):
     """
     Rotate and/or dedisperse data.
 
@@ -2410,7 +2410,7 @@ def rotate_data(data, phase=0.0, DM=0.0, Ps=None, freqs=None, nu_ref=np.inf):
         if fterm.shape[1] != nchan or fterm.shape[0] != nsub:
             print "Wrong shape for frequency array."
             return 0
-        phase += np.array([D[isub]*fterm[isub] for isub in range(nsub)])
+        phase += np.array([D[isub]*fterm[isub]/doppler for isub in range(nsub)])
         phase = np.einsum('ij,k', phase, harmind)
         phasor = np.exp(2.0j * np.pi * phase)
         dFFT = np.array([dFFT[:,ipol,:,:]*phasor for ipol in range(npol)])
